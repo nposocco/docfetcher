@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+
 import net.contentobjects.jnotify.JNotify;
 import net.sourceforge.docfetcher.enums.Msg;
 import net.sourceforge.docfetcher.gui.ManualLocator;
@@ -33,9 +36,6 @@ import net.sourceforge.docfetcher.util.Util;
 import net.sourceforge.docfetcher.util.annotations.NotNull;
 import net.sourceforge.docfetcher.util.annotations.Nullable;
 import net.sourceforge.docfetcher.util.concurrent.DelayedExecutor;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 /**
  * @author Tran Nam Quang
@@ -342,6 +342,32 @@ public final class FolderWatcher {
 			IndexingConfig config = watchedIndex.getConfig();
 			Path path = config.getStorablePath(target);
 			
+			// Apply inclusion filters
+			boolean inAtLeastOne = false;
+			boolean atLeastOneInclude = false;
+			outer: {
+				for (PatternAction patternAction : config.getPatternActions()) {
+					switch (patternAction.getAction()) {
+					case EXCLUDE:
+						break;
+					case DETECT_MIME:
+						break;
+					case INCLUDE:
+						atLeastOneInclude = true;
+						if (!isDeleted && patternAction.matches(name, path, isFile)) {
+							inAtLeastOne = true;
+							break outer;
+						}
+						break;
+					default:
+						throw new IllegalStateException();
+					}
+				}
+			}
+			if (atLeastOneInclude && !inAtLeastOne) {
+				return false;
+			}
+			
 			// Apply exclusion filters
 			boolean mimeMatch = false;
 			outer: {
@@ -356,6 +382,8 @@ public final class FolderWatcher {
 							mimeMatch = true;
 							break outer;
 						}
+						break;
+					case INCLUDE:
 						break;
 					default:
 						throw new IllegalStateException();

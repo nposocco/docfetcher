@@ -34,11 +34,11 @@ public final class ManualLocator {
 	public static File getManualFile() {
 		// TODO test on a platforms and with different locales that this really works
 		String helpDirParent;
-		if (SystemConf.Bool.IsDevelopmentVersion.get())
+		if (SystemConf.Bool.IsDevelopmentVersion.get()) {
 			helpDirParent = "dist";
-		else if (AppUtil.isPortable() || Util.IS_WINDOWS)
+		} else if (AppUtil.isPortable() || Util.IS_WINDOWS) {
 			helpDirParent = Util.USER_DIR_PATH;
-		else if (Util.IS_MAC_OS_X)
+		} else if (Util.IS_MAC_OS_X)
 			helpDirParent = "../Resources";
 		else if (Util.IS_LINUX)
 			helpDirParent = "/usr/share/doc/docfetcher";

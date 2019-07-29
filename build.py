@@ -14,13 +14,13 @@ classpath_sep = ';' if is_windows else ':'
 
 print('Cleaning build directory...')
 if not exists('build'):
-	os.makedirs('build')
+    os.makedirs('build')
 for filename in os.listdir('build'):
-	path = join('build', filename)
-	if isfile(path):
-		os.remove(path)
-	elif isdir(path):
-		shutil.rmtree(path)
+    path = join('build', filename)
+    if isfile(path):
+        os.remove(path)
+    elif isdir(path):
+        shutil.rmtree(path)
 
 print('Copying sources to build directory...')
 shutil.copytree(
@@ -30,14 +30,20 @@ shutil.copytree(
 )
 
 def execute(cmd_parts):
-	os.system(' '.join(cmd_parts))
+    try :
+        command = ' '.join(cmd_parts)
+        if os.system(command) != 0 :
+            raise Exception('command does not exist')
+    except :
+        print("command does not work")
+        
 
 # Recursively collect library jars
 jars = []
 for root, dirs, files in os.walk('lib'):
-	for filename in files:
-		if not filename.endswith('.jar'): continue
-		jars.append(join(root, filename))
+    for filename in files:
+        if not filename.endswith('.jar'): continue
+        jars.append(join(root, filename))
 
 package = 'net.sourceforge.docfetcher'
 package_path = package.replace('.', '/')
@@ -48,16 +54,17 @@ compile_paths = [
 	package_path, 'build/BuildMain.java')
 ]
 for root, dirs, files in os.walk('build/tmp/src-builder'):
-	for filename in files:
-		if not filename.endswith('.java'):
-			continue
-		if filename.startswith('Test') or filename.endswith('Test.java'):
-			path = join(root, filename)
-			compile_paths.append(path)
+    for filename in files:
+        if not filename.endswith('.java'):
+            continue
+        if filename.startswith('Test') or filename.endswith('Test.java'):
+            path = join(root, filename)
+            compile_paths.append(path)
+	
 execute([
 	'javac',
-	'-source 1.6',
-	'-target 1.6',
+	'-source 1.7',
+	'-target 1.7',
 	'-sourcepath build/tmp/src-builder',
 	'-classpath \"%s\"' % classpath_sep.join(jars),
 	'-nowarn',

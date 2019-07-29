@@ -22,6 +22,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Table;
+
+import com.google.common.primitives.Longs;
+
 import net.sourceforge.docfetcher.enums.Img;
 import net.sourceforge.docfetcher.enums.Msg;
 import net.sourceforge.docfetcher.enums.SettingsConf;
@@ -42,19 +55,6 @@ import net.sourceforge.docfetcher.util.gui.FileIconCache;
 import net.sourceforge.docfetcher.util.gui.MenuAction;
 import net.sourceforge.docfetcher.util.gui.viewer.VirtualTableViewer;
 import net.sourceforge.docfetcher.util.gui.viewer.VirtualTableViewer.Column;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Table;
-
-import com.google.common.primitives.Longs;
 
 /**
  * @author Tran Nam Quang
@@ -98,7 +98,7 @@ public final class ResultPanel {
 	private final VirtualTableViewer<ResultDocument> viewer;
 	private final FileIconCache iconCache;
 	private HeaderMode presetHeaderMode = HeaderMode.FILES; // externally suggested header mode
-	private HeaderMode actualHeaderMode = HeaderMode.FILES; // header mode after examining each visible element
+	private HeaderMode actualHeaderMode = HeaderMode.FILES; // header mode after examining each visible element 
 
 	public ResultPanel(@NotNull Composite parent) {
 		iconCache = new FileIconCache(parent);
@@ -325,6 +325,17 @@ public final class ResultPanel {
 				copyToClipboard();
 			}
 		});
+		
+		menuManager.addSeparator();
+		
+		menuManager.add(new MenuAction(Msg.save_current_ordering.get()) {
+			public boolean isEnabled() {
+				return true;
+			}
+			public void run() {
+				SettingsConf.Int.InitialSorting.set(viewer.getCurrentOrdering()); 
+			}
+		});
 	}
 	
 	private void copyToClipboard() {
@@ -397,6 +408,7 @@ public final class ResultPanel {
 	// column numbering starts at 1
 	// the index points at the column in visual order, not in creation order
 	public void sortByColumn(int columnIndex) {
+		
 		if (columnIndex == 0)
 			return;
 		/*
@@ -410,6 +422,8 @@ public final class ResultPanel {
 				return;
 			boolean up = Math.signum(columnIndex) > 0;
 			viewer.sortByColumn(columns.get(index), up);
+			
+			
 		}
 		catch (NumberFormatException e) {
 			return;

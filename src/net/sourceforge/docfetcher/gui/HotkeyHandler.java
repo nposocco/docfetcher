@@ -14,6 +14,8 @@ package net.sourceforge.docfetcher.gui;
 
 import java.io.File;
 
+import org.eclipse.swt.SWT;
+
 import jxgrabkey.HotkeyConflictException;
 import jxgrabkey.JXGrabKey;
 import net.sourceforge.docfetcher.enums.SettingsConf;
@@ -22,7 +24,7 @@ import net.sourceforge.docfetcher.util.Event;
 import net.sourceforge.docfetcher.util.Event.Listener;
 import net.sourceforge.docfetcher.util.Util;
 
-import org.eclipse.swt.SWT;
+
 
 import com.melloware.jintellitype.JIntellitype;
 

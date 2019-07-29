@@ -24,7 +24,7 @@ SetCompressor /FINAL zlib
 
 !define /file VERSION "current-version.txt"
 !define PORTABLE_PATH build\DocFetcher-${VERSION}
-!define JRE_VERSION "1.6"
+!define JRE_VERSION "1.7"
 !define JRE_URL "http://javadl.sun.com/webapps/download/AutoDL?BundleId=52252"
 !include "JREDyna_Inetc.nsh"
 
@@ -136,7 +136,7 @@ Section "DocFetcher"
 		Sleep 250
     Goto killdaemon
     nodaemon:
-	
+
 	; Remove existing DocFetcher folder. This is necessary because:
 	; - Otherwise the uninstaller might not work cleanly.
 	; - Loading different versions of the same library might crash the program. See bug #3558268.
@@ -158,13 +158,13 @@ Section "DocFetcher"
 
 	SetOutPath $INSTDIR\img
 	File /r ${PORTABLE_PATH}\img\*.*
-	
+
 	SetOutPath $INSTDIR\lang
 	File /r ${PORTABLE_PATH}\lang\*.*
 
 	;SetOutPath $INSTDIR\templates
 	;File /r ${PORTABLE_PATH}\templates\*.xml
-	
+
 	Delete /REBOOTOK "$INSTDIR\lib\net.sourceforge.docfetcher_*.*"
 	SetOutPath $INSTDIR\lib
 	File /r /x *.so /x *.dylib /x *linux* /x *macosx* /x *docfetcher*.jar ${PORTABLE_PATH}\lib\*.*

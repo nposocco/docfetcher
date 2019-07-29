@@ -19,6 +19,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MenuAdapter;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.sun.jna.platform.win32.Shell32Util;
+
 import net.sourceforge.docfetcher.UtilGlobal;
 import net.sourceforge.docfetcher.enums.Img;
 import net.sourceforge.docfetcher.enums.Msg;
@@ -50,26 +70,6 @@ import net.sourceforge.docfetcher.util.gui.ContextMenuManager;
 import net.sourceforge.docfetcher.util.gui.MenuAction;
 import net.sourceforge.docfetcher.util.gui.dialog.InputLoop;
 import net.sourceforge.docfetcher.util.gui.viewer.SimpleTreeViewer;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.MenuAdapter;
-import org.eclipse.swt.events.MenuEvent;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.sun.jna.platform.win32.Shell32Util;
 
 public final class IndexPanel {
 	
@@ -298,9 +298,7 @@ public final class IndexPanel {
 			}
 			public void run() {
 				IndexingQueue queue = indexRegistry.getQueue();
-				IndexAction action = isUpdate
-				? IndexAction.UPDATE
-					: IndexAction.REBUILD;
+				IndexAction action = isUpdate ? IndexAction.UPDATE : IndexAction.REBUILD;
 				List<LuceneIndex> sel = getSelectedIndexes();
 				if (!isUpdate)
 					indexRegistry.removeIndexes(sel, false);

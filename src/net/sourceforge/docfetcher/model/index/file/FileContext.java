@@ -14,6 +14,8 @@ package net.sourceforge.docfetcher.model.index.file;
 import java.io.File;
 import java.io.IOException;
 
+import de.schlichtherle.truezip.file.TArchiveDetector;
+import de.schlichtherle.truezip.file.TFile;
 import net.sourceforge.docfetcher.model.Cancelable;
 import net.sourceforge.docfetcher.model.Path;
 import net.sourceforge.docfetcher.model.TreeNode;
@@ -33,8 +35,6 @@ import net.sourceforge.docfetcher.util.CheckedOutOfMemoryError;
 import net.sourceforge.docfetcher.util.Util;
 import net.sourceforge.docfetcher.util.annotations.NotNull;
 import net.sourceforge.docfetcher.util.annotations.Nullable;
-import de.schlichtherle.truezip.file.TArchiveDetector;
-import de.schlichtherle.truezip.file.TFile;
 
 /**
  * @author Tran Nam Quang
@@ -245,11 +245,37 @@ class FileContext {
 		boolean isFile = isFileOrSolidArchive
 				&& !config.isSolidArchive(filename);
 		
+		// Apply inclusion filters
+		boolean inAtLeastOne = false;
+		boolean atLeastOneInclude = false;
+		for (PatternAction patternAction : config.getPatternActions()) {
+			switch (patternAction.getAction()) {
+				case EXCLUDE:
+					break;
+				case DETECT_MIME:
+					break;
+				case INCLUDE:
+					atLeastOneInclude = true;
+					if (patternAction.matches(filename, filepath, isFileOrArchive)) {
+						inAtLeastOne = true;
+					}
+					break;
+				default:
+					throw new IllegalStateException();
+			}
+		}
+		//if (atLeastOneInclude && !inAtLeastOne) {
+		//	return true;
+		//}
+		
+		
 		for (PatternAction patternAction : config.getPatternActions()) {
 			switch (patternAction.getAction()) {
 			case EXCLUDE:
 				if (patternAction.matches(filename, filepath, isFileOrArchive))
 					return true;
+				break;
+			case INCLUDE:
 				break;
 			case DETECT_MIME:
 				/*

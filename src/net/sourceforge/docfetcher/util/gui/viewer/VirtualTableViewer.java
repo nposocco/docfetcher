@@ -16,13 +16,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import net.sourceforge.docfetcher.util.Event;
-import net.sourceforge.docfetcher.util.Util;
-import net.sourceforge.docfetcher.util.annotations.Immutable;
-import net.sourceforge.docfetcher.util.annotations.MutableCopy;
-import net.sourceforge.docfetcher.util.annotations.NotNull;
-import net.sourceforge.docfetcher.util.annotations.Nullable;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -34,6 +27,14 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+
+import net.sourceforge.docfetcher.enums.SettingsConf;
+import net.sourceforge.docfetcher.util.Event;
+import net.sourceforge.docfetcher.util.Util;
+import net.sourceforge.docfetcher.util.annotations.Immutable;
+import net.sourceforge.docfetcher.util.annotations.MutableCopy;
+import net.sourceforge.docfetcher.util.annotations.NotNull;
+import net.sourceforge.docfetcher.util.annotations.Nullable;
 
 /**
  * @author Tran Nam Quang
@@ -76,7 +77,7 @@ public abstract class VirtualTableViewer<E> {
 	private final List<Column<E>> columns = new ArrayList<Column<E>>();
 	private List<E> elements;
 	private boolean sortingEnabled = false;
-	@Nullable private Column<E> lastSortColumn = null;
+	@Nullable public Column<E> lastSortColumn = null;
 	
 	public VirtualTableViewer(@NotNull Composite parent, int style) {
 		table = new Table(parent, style | SWT.VIRTUAL);
@@ -106,6 +107,13 @@ public abstract class VirtualTableViewer<E> {
 	@NotNull
 	public final Table getControl() {
 		return table;
+	}
+	
+	public int getCurrentOrdering() {
+		if (lastSortColumn != null) {
+			return lastSortColumn.lastSortDirection*(columns.indexOf(lastSortColumn)+1);
+		}
+		return SettingsConf.Int.InitialSorting.get();
 	}
 	
 	public final void addColumn(@NotNull final Column<E> column) {

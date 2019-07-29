@@ -19,16 +19,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
-import net.sourceforge.docfetcher.enums.Msg;
-import net.sourceforge.docfetcher.model.LuceneIndex;
-import net.sourceforge.docfetcher.util.AppUtil;
-import net.sourceforge.docfetcher.util.Util;
-import net.sourceforge.docfetcher.util.annotations.Immutable;
-import net.sourceforge.docfetcher.util.annotations.NotNull;
-import net.sourceforge.docfetcher.util.collect.ListMap;
-import net.sourceforge.docfetcher.util.collect.ListMap.Entry;
-import net.sourceforge.docfetcher.util.gui.GroupWrapper;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -38,6 +28,18 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+
+import net.sourceforge.docfetcher.enums.Img;
+import net.sourceforge.docfetcher.enums.Msg;
+import net.sourceforge.docfetcher.enums.SettingsConf;
+import net.sourceforge.docfetcher.model.LuceneIndex;
+import net.sourceforge.docfetcher.util.AppUtil;
+import net.sourceforge.docfetcher.util.Util;
+import net.sourceforge.docfetcher.util.annotations.Immutable;
+import net.sourceforge.docfetcher.util.annotations.NotNull;
+import net.sourceforge.docfetcher.util.collect.ListMap;
+import net.sourceforge.docfetcher.util.collect.ListMap.Entry;
+import net.sourceforge.docfetcher.util.gui.GroupWrapper;
 
 /**
  * @author Tran Nam Quang
@@ -73,23 +75,25 @@ final class FileExtensionGroupWrapper {
 	}
 
 	private void createLayout(Group parent) {
-		GridLayout gridLayout = Util.createGridLayout(3, false, 7, 0);
+		GridLayout gridLayout = Util.createGridLayout(4, false, 7, 0);
 		gridLayout.verticalSpacing = 5;
 		parent.setLayout(gridLayout);
 	}
 
 	private void createContents(Group parent) {
 		textExtField = createExtField(
-			parent, Msg.plain_text.get(), index.getConfig().getTextExtensions());
+			parent, Msg.plain_text.get(), SettingsConf.StrList.defaultTextExtensions.get(), "defaultTextExtensions");
 		zipExtField = createExtField(
-			parent, Msg.zip_archives.get(), index.getConfig().getZipExtensions());
+			parent, Msg.zip_archives.get(), SettingsConf.StrList.defaultZipExtensions.get(), "defaultZipExtensions");
 	}
 	
 	@NotNull
 	private Text createExtField(@NotNull Composite parent,
 								@NotNull String label,
-								@NotNull Collection<String> extensions) {
+								@NotNull Collection<String> extensions,
+								@NotNull String config) {
 		final Text field = Util.createLabeledGridText(parent, label);
+		final String configName = config;
 		((GridData)field.getLayoutData()).horizontalIndent = 5;
 		field.setText(Util.join(" ", extensions));
 		
@@ -99,8 +103,28 @@ final class FileExtensionGroupWrapper {
 			}
 		});
 		
+		Button saverBt = Util.createPushButton(
+				parent, Img.PREFERENCES.get(), Msg.save_setting.get(), new SelectionAdapter() {
+				public void widgetSelected(SelectionEvent e) {
+					onSaverButtonClicked(field,configName);
+				}
+			});
+		
 		chooserBt.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+		saverBt.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
 		return field;
+	}
+	
+	private void onSaverButtonClicked(@NotNull final Text field,
+									  @NotNull final String config) {
+		if (config == "defaultZipExtensions") {
+			SettingsConf.StrList.defaultZipExtensions.set(Arrays.asList(field.getText().split(" ")));
+			AppUtil.showInfo("Default config saved");
+		} else if (config == "defaultTextExtensions") {
+			SettingsConf.StrList.defaultTextExtensions.set(Arrays.asList(field.getText().split(" ")));
+			AppUtil.showInfo("Default config saved");
+		}
+		return;
 	}
 	
 	private void onChooserButtonClicked(@NotNull final Text field) {

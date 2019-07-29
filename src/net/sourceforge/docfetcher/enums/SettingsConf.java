@@ -19,13 +19,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.sourceforge.docfetcher.util.ConfLoader.Description;
-import net.sourceforge.docfetcher.util.ConfLoader.Storable;
-import net.sourceforge.docfetcher.util.Event;
-import net.sourceforge.docfetcher.util.Util;
-import net.sourceforge.docfetcher.util.annotations.Immutable;
-import net.sourceforge.docfetcher.util.annotations.NotNull;
-
 import org.aspectj.lang.annotation.SuppressAjWarnings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -46,6 +39,13 @@ import org.eclipse.swt.widgets.TableColumn;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
+
+import net.sourceforge.docfetcher.util.ConfLoader.Description;
+import net.sourceforge.docfetcher.util.ConfLoader.Storable;
+import net.sourceforge.docfetcher.util.Event;
+import net.sourceforge.docfetcher.util.Util;
+import net.sourceforge.docfetcher.util.annotations.Immutable;
+import net.sourceforge.docfetcher.util.annotations.NotNull;
 
 /**
  * This class handles the storage and retrieval of application-wide internal
@@ -70,52 +70,60 @@ public final class SettingsConf {
 
 	@Description("# Boolean entries. Allowed values: true, false")
 	public static enum Bool implements Storable {
-		ShowManualOnStartup (true),
-		UseOrOperator (true),
-		HideOnOpen (false), // Default must be 'false' since system tray not supported on Ubuntu Unity
-		ClearSearchHistoryOnExit (false),
-		ResetLocationFilterOnExit (true),
-		HotkeyEnabled (true),
+		ShowManualOnStartup(true), 
+		UseOrOperator(true), 
+		HideOnOpen(false), // Default must be 'false' since system tray
+																			// not supported on Ubuntu Unity
+		ClearSearchHistoryOnExit(false), 
+		ResetLocationFilterOnExit(true), 
+		HotkeyEnabled(true),
 
-		ShowFilterPanel (true),
-		ShowPreviewPanel (true),
-		ShowPreviewPanelAtBottom (true),
+		ShowFilterPanel(true), 
+		ShowPreviewPanel(true), 
+		ShowPreviewPanelAtBottom(true),
 
-		FilesizeFilterMaximized (true),
-		TypesFilterMaximized (false),
-		LocationFilterMaximized (false),
+		FilesizeFilterMaximized(true), 
+		TypesFilterMaximized(false), 
+		LocationFilterMaximized(false),
 
-		MainShellMaximized (false),
-		PreferHtmlPreview (true),
-		HighlightingEnabled (true),
-		ShowRelativePathsMessage (true),
-		AutoScrollToFirstMatch (true),
-		CloseToTray (false), // Default must be 'false' since system tray not supported on Ubuntu Unity
-		AllowOnlyOneInstance (false),
+		MainShellMaximized(false), 
+		PreferHtmlPreview(true), 
+		HighlightingEnabled(true), 
+		ShowRelativePathsMessage(true),
+		AutoScrollToFirstMatch(true), 
+		CloseToTray(false), // Default must be 'false' since system tray not supported on
+															// Ubuntu Unity
+		AllowOnlyOneInstance(false),
 		;
 
-		public final Event<Boolean> evtChanged = new Event<Boolean> ();
+		public final Event<Boolean> evtChanged = new Event<Boolean>();
 		public final boolean defaultValue;
 		private boolean value;
 
 		Bool(boolean defaultValue) {
 			value = this.defaultValue = defaultValue;
 		}
+
 		@SuppressAjWarnings
 		public boolean get() {
 			return value;
 		}
+
 		public void set(boolean value) {
-			if (this.value == value) return;
+			if (this.value == value)
+				return;
 			this.value = value;
 			evtChanged.fire(value);
 		}
+
 		public void load(String str) {
 			value = Boolean.parseBoolean(str);
 		}
+
 		public String valueToString() {
 			return Boolean.toString(value);
 		}
+
 		public void bindMaximized(final Shell shell) {
 			shell.setMaximized(value);
 			shell.addControlListener(new ControlAdapter() {
@@ -128,58 +136,68 @@ public final class SettingsConf {
 
 	@Description("# Integer entries.")
 	public static enum Int implements Storable {
-		FilterPanelWidth (250),
+		FilterPanelWidth(250), 
+		InitialSorting(0),
 		;
 
-		public final Event<Integer> evtChanged = new Event<Integer> ();
+		public final Event<Integer> evtChanged = new Event<Integer>();
 		public final int defaultValue;
 		private int value;
 
 		Int(int defaultValue) {
 			value = this.defaultValue = defaultValue;
 		}
+
 		public int get() {
 			return value;
 		}
+
 		public void set(int value) {
-			if (this.value == value) return;
+			if (this.value == value)
+				return;
 			this.value = value;
 			evtChanged.fire(value);
 		}
+
 		public void load(String str) {
 			value = Util.toInt(str, value);
 		}
+
 		public String valueToString() {
 			return Integer.toString(value);
 		}
 	}
 
-	@Description("# String entries. All values allowed, except for \\, \\t, \\n," +
-			"\r\n# \\r, \\f, =, :, #, ! and leading whitespace, which must be" +
-			"\r\n# escaped by a preceding \\.")
+	@Description("# String entries. All values allowed, except for \\, \\t, \\n,"
+			+ "\r\n# \\r, \\f, =, :, #, ! and leading whitespace, which must be" + "\r\n# escaped by a preceding \\.")
 	public static enum Str implements Storable {
-		LastIndexedFolder (Util.USER_HOME_PATH),
-		LastIndexedPSTFile (""),
+		LastIndexedFolder(Util.USER_HOME_PATH), 
+		LastIndexedPSTFile(""),
 		;
 
-		public final Event<String> evtChanged = new Event<String> ();
+		public final Event<String> evtChanged = new Event<String>();
 		public final String defaultValue;
 		private String value;
 
 		Str(String defaultValue) {
 			value = this.defaultValue = defaultValue;
 		}
+
 		public String get() {
 			return value;
 		}
+
 		public void set(String value) {
-			if (this.value == value) return;
+			if (this.value == value)
+				return;
 			this.value = value;
 			evtChanged.fire(value);
 		}
+
 		public void load(String str) {
 			value = str;
 		}
+
 		public String valueToString() {
 			return value;
 		}
@@ -187,32 +205,37 @@ public final class SettingsConf {
 
 	@Description("# Comma-separated lists of integers.")
 	public static enum IntArray implements Storable {
-		PreviewHighlighting (255, 255, 0),
-		HotkeyToFront (SWT.CTRL, SWT.F8),
+		PreviewHighlighting(255, 255, 0), 
+		HotkeyToFront(SWT.CTRL, SWT.F8),
 
-		FilterSash (1, 1),
-		RightSashHorizontal (1, 1),
-		RightSashVertical (1, 1),
+		FilterSash(1, 1), 
+		RightSashHorizontal(1, 1), 
+		RightSashVertical(1, 1),
 		;
 
-		public final Event<int[]> evtChanged = new Event<int[]> ();
+		public final Event<int[]> evtChanged = new Event<int[]>();
 		public final int[] defaultValue;
 		private int[] value;
 
 		IntArray(int... defaultValue) {
 			value = this.defaultValue = defaultValue;
 		}
+
 		public int[] get() {
 			return value;
 		}
+
 		public void set(int... value) {
-			if (Arrays.equals(this.value, value)) return;
+			if (Arrays.equals(this.value, value))
+				return;
 			this.value = value;
 			evtChanged.fire(value);
 		}
+
 		public void load(String str) {
 			value = Util.toIntArray(str, value);
 		}
+
 		public String valueToString() {
 			return Ints.join(", ", value);
 		}
@@ -221,55 +244,63 @@ public final class SettingsConf {
 	@Description("# Semicolon-separated lists of strings.")
 	public static enum StrList implements Storable {
 		SearchHistory,
+		defaultZipExtensions,
+		defaultTextExtensions("txt","java","cpp","py"),
+		SearchParsers("AbiWordParser","FLACParser","HtmlParser","ExifParser","MP3Parser","ChmParser","MSExcelParser","MSExcel2007Parser","MSPowerPointParser","MSPowerPoint2007Parser","MSVisioParser","MSWordParser","MSWord2007Parser","OpenOfficeCalcParser","OpenOfficeDrawParser","OpenOfficeImpressParser","OpenOfficeWriterParser","PdfParser","RtfParser","SvgParser","TextParser"),
 		;
 
-		public final Event<List<String>> evtChanged = new Event<List<String>> ();
-		@Immutable public final List<String> defaultValue;
+		public final Event<List<String>> evtChanged = new Event<List<String>>();
+		@Immutable
+		public final List<String> defaultValue;
 		private List<String> value;
 
 		StrList(String... defaultValue) {
 			value = this.defaultValue = Arrays.asList(defaultValue);
 		}
+
 		@Immutable
 		public List<String> get() {
 			return Collections.unmodifiableList(value);
 		}
+
 		public void set(String... value) {
 			if (Util.equals(this.value, value))
 				return;
 			this.value = Arrays.asList(value);
 			evtChanged.fire(this.value);
 		}
+
 		public void set(List<String> value) {
 			if (this.value.equals(value))
 				return;
 			this.value = value;
 			evtChanged.fire(value);
 		}
+
 		public void load(String str) {
 			value = Util.decodeStrings(';', str);
 		}
+
 		public String valueToString() {
 			return Util.encodeStrings(";", value);
 		}
 	}
 
-	@Description("# Window dimensions: x, y, width and height. If x < 0 or" +
-			"\r\n# y < 0, the window is centered relative to the screen or to" +
-			"\r\n# its parent window.")
+	@Description("# Window dimensions: x, y, width and height. If x < 0 or"
+			+ "\r\n# y < 0, the window is centered relative to the screen or to" + "\r\n# its parent window.")
 	public static enum ShellBounds implements Storable {
-		MainWindow (-1, -1, 640, 480),
-		IndexingDialog (-1, -1, 450, 500),
-		FileExtensionChooser (-1, -1, 300, 450),
-		PreferencesDialog (-1, -1, 500, 400),
-		;
+		MainWindow(-1, -1, 640, 480), 
+		IndexingDialog(-1, -1, 450, 500), 
+		FileExtensionChooser(-1, -1, 300, 450),
+		PreferencesDialog(-1, -1, 500, 400),;
 
 		public final int[] defaultValue;
 		private int[] value;
 
 		ShellBounds(int x, int y, int width, int height) {
-			value = defaultValue = new int[] {x, y, width, height};
+			value = defaultValue = new int[] { x, y, width, height };
 		}
+
 		public void bind(final Shell shell) {
 			if (value[0] < 0 || value[1] < 0)
 				Util.setCenteredBounds(shell, value[2], value[3]);
@@ -277,23 +308,29 @@ public final class SettingsConf {
 				shell.setBounds(value[0], value[1], value[2], value[3]);
 			shell.addControlListener(new ControlAdapter() {
 				public void controlMoved(ControlEvent e) {
-					if (shell.getMaximized()) return;
+					if (shell.getMaximized())
+						return;
 					Point pos = shell.getLocation();
 					value[0] = pos.x;
 					value[1] = pos.y;
 				}
+
 				public void controlResized(ControlEvent e) {
-					if (shell.getMaximized()) return;
-					if (ProgramConf.Bool.FixWindowSizes.get()) return;
+					if (shell.getMaximized())
+						return;
+					if (ProgramConf.Bool.FixWindowSizes.get())
+						return;
 					Point size = shell.getSize();
 					value[2] = size.x;
 					value[3] = size.y;
 				}
 			});
 		}
+
 		public void load(String str) {
 			value = Util.toIntArray(str, value);
 		}
+
 		public String valueToString() {
 			return Ints.join(", ", value);
 		}
@@ -301,10 +338,7 @@ public final class SettingsConf {
 
 	@Description("# Comma-separated lists of table column widths.")
 	public static enum ColumnWidths implements Storable {
-		ResultPanel (250, 75, 75, 200, 75, 350, 100, 100),
-		IndexingErrorTable (100, 100, 500),
-		PatternTable (200, 75, 75),
-		;
+		ResultPanel(250, 75, 75, 200, 75, 350, 100, 100), IndexingErrorTable(100, 100, 500), PatternTable(200, 75, 75),;
 
 		private final Event<Table> evtChanged = new Event<Table>();
 		public final int[] defaultValue;
@@ -315,13 +349,13 @@ public final class SettingsConf {
 		}
 
 		/**
-		 * Binds the enumeration's values to the column widths of the given
-		 * table, i.e. the column widths are initialized with the stored values
-		 * and the values are updated when the column widths change.
+		 * Binds the enumeration's values to the column widths of the given table, i.e.
+		 * the column widths are initialized with the stored values and the values are
+		 * updated when the column widths change.
 		 * <p>
-		 * This method supports binding multiple tables to the same enumeration:
-		 * If multiple tables are bound, the column widths are synchronized
-		 * across all bound tables.
+		 * This method supports binding multiple tables to the same enumeration: If
+		 * multiple tables are bound, the column widths are synchronized across all
+		 * bound tables.
 		 */
 		public void bind(@NotNull final Table table) {
 			final TableColumn[] columns = table.getColumns();
@@ -361,9 +395,11 @@ public final class SettingsConf {
 				}
 			});
 		}
+
 		public void load(String str) {
 			value = Util.toIntArray(str, value);
 		}
+
 		public String valueToString() {
 			return Ints.join(", ", value);
 		}
@@ -371,8 +407,7 @@ public final class SettingsConf {
 
 	@Description("# Column orderings.")
 	public static enum ColumnOrder implements Storable {
-		ResultPanelColumnOrder (),
-		;
+		ResultPanelColumnOrder(),;
 
 		public final int[] defaultValue;
 		private int[] value;
@@ -380,9 +415,11 @@ public final class SettingsConf {
 		ColumnOrder(int... defaultValue) {
 			value = this.defaultValue = defaultValue;
 		}
+
 		public void load(String str) {
 			value = Util.toIntArray(str, value);
 		}
+
 		public String valueToString() {
 			return Ints.join(", ", value);
 		}
@@ -411,8 +448,7 @@ public final class SettingsConf {
 
 	@Description("# Comma-separated lists of sash weights.")
 	public static enum SashWeights implements Storable {
-		ProgressPanel (2, 1),
-		;
+		ProgressPanel(2, 1),;
 
 		private final Event<SashForm> evtChanged = new Event<SashForm>();
 		public final int[] defaultValue;
@@ -423,13 +459,13 @@ public final class SettingsConf {
 		}
 
 		/**
-		 * Binds the enumeration's values to the weights of the given sash form,
-		 * i.e. the sash weights are initialized with the stored values and the
-		 * values are updated when the sash weights change.
+		 * Binds the enumeration's values to the weights of the given sash form, i.e.
+		 * the sash weights are initialized with the stored values and the values are
+		 * updated when the sash weights change.
 		 * <p>
-		 * This method supports binding multiple sash forms to the same
-		 * enumeration: If multiple sash forms are bound, the sash weights are
-		 * synchronized across all bound sash forms.
+		 * This method supports binding multiple sash forms to the same enumeration: If
+		 * multiple sash forms are bound, the sash weights are synchronized across all
+		 * bound sash forms.
 		 */
 		public void bind(@NotNull final SashForm sash) {
 			Control[] children = sash.getChildren();
@@ -446,8 +482,8 @@ public final class SettingsConf {
 						value = sash.getWeights();
 
 						/*
-						 * The event must be fired with asyncExec, otherwise
-						 * we'll get some nasty visual artifacts.
+						 * The event must be fired with asyncExec, otherwise we'll get some nasty visual
+						 * artifacts.
 						 */
 						Util.runAsyncExec(sash, new Runnable() {
 							public void run() {
@@ -475,9 +511,11 @@ public final class SettingsConf {
 				}
 			});
 		}
+
 		public void load(String str) {
 			value = Util.toIntArray(str, value);
 		}
+
 		public String valueToString() {
 			return Ints.join(", ", value);
 		}
@@ -485,16 +523,11 @@ public final class SettingsConf {
 
 	@Description("# Font entries, consisting of font name, height and style.")
 	public static enum FontDescription implements Storable {
-		PreviewWindows ("Verdana", 10, SWT.NORMAL),
-		PreviewLinux ("Sans", 10, SWT.NORMAL),
-		PreviewMacOsX ("Helvetica", 12, SWT.NORMAL),
-		PreviewMonoWindows ("Courier New", 10, SWT.NORMAL),
-		PreviewMonoLinux ("Monospace", 10, SWT.NORMAL),
-		PreviewMonoMacOsX ("Monaco", 10, SWT.NORMAL),
-		;
+		PreviewWindows("Verdana", 10, SWT.NORMAL), PreviewLinux("Sans", 10, SWT.NORMAL),
+		PreviewMacOsX("Helvetica", 12, SWT.NORMAL), PreviewMonoWindows("Courier New", 10, SWT.NORMAL),
+		PreviewMonoLinux("Monospace", 10, SWT.NORMAL), PreviewMonoMacOsX("Monaco", 10, SWT.NORMAL),;
 
-		private static Pattern fontPattern = Pattern.compile(
-				"(.*)," + // Font name with whitespace
+		private static Pattern fontPattern = Pattern.compile("(.*)," + // Font name with whitespace
 				"\\s*(\\d+)\\s*," + // Font height with whitespace
 				"\\s*(\\d+)\\s*" // Font style with whitespace
 		);
@@ -507,48 +540,46 @@ public final class SettingsConf {
 		FontDescription(String name, int height, int style) {
 			value = defaultValue = new FontData(name, height, style);
 		}
+
 		public void load(String str) {
 			Matcher matcher = fontPattern.matcher(str);
-			if (! matcher.matches()) return;
-			value = new FontData(
-					matcher.group(1).trim(),
-					Integer.parseInt(matcher.group(2)),
-					Integer.parseInt(matcher.group(3))
-			);
+			if (!matcher.matches())
+				return;
+			value = new FontData(matcher.group(1).trim(), Integer.parseInt(matcher.group(2)),
+					Integer.parseInt(matcher.group(3)));
 		}
+
 		public String valueToString() {
 			// The SWT API discourages accessing the FontData fields
-			return Util.join(", ",
-					value.getName(),
-					value.getHeight(),
-					value.getStyle()
-			);
+			return Util.join(", ", value.getName(), value.getHeight(), value.getStyle());
 		}
+
 		// Should only be called from within the SWT thread
 		// Caller is responsible for disposing the returned font
 		@NotNull
 		public Font createFont() {
 			return new Font(Display.getDefault(), value);
 		}
+
 		public void set(@NotNull FontData fontData) {
 			Util.checkNotNull(fontData);
 			value = fontData;
 			evtChanged.fire(null);
 		}
+
 		@NotNull
 		public FontData createFontData() {
-			return new FontData(
-				value.getName(), value.getHeight(), value.getStyle());
+			return new FontData(value.getName(), value.getHeight(), value.getStyle());
 		}
+
 		@NotNull
 		public FontData createDefaultFontData() {
-			return new FontData(
-				defaultValue.getName(), defaultValue.getHeight(),
-				defaultValue.getStyle());
+			return new FontData(defaultValue.getName(), defaultValue.getHeight(), defaultValue.getStyle());
 		}
 	}
 
-	private SettingsConf () {}
+	private SettingsConf() {
+	}
 
 	public static String loadHeaderComment() throws IOException {
 		URL url = SettingsConf.class.getResource("settings-conf-header.txt");

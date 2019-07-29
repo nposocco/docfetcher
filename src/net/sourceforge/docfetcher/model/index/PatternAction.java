@@ -34,6 +34,7 @@ public final class PatternAction implements Serializable {
 	
 	public enum MatchAction {
 		EXCLUDE (Msg.exclude.get()),
+		INCLUDE (Msg.include.get()),
 		DETECT_MIME (Msg.detect_mime_type.get()),
 		;
 		public final String displayName;

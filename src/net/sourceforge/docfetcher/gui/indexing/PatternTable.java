@@ -17,10 +17,23 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import net.sourceforge.docfetcher.enums.Img;
 import net.sourceforge.docfetcher.enums.Msg;
@@ -41,19 +54,6 @@ import net.sourceforge.docfetcher.util.gui.viewer.ColumnEditSupport.ComboEditSup
 import net.sourceforge.docfetcher.util.gui.viewer.ColumnEditSupport.TextEditSupport;
 import net.sourceforge.docfetcher.util.gui.viewer.SimpleTableViewer;
 import net.sourceforge.docfetcher.util.gui.viewer.SimpleTableViewer.Column;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
 
 /**
  * @author Tran Nam Quang
@@ -166,6 +166,7 @@ final class PatternTable extends Composite {
 			protected String getLabel(PatternAction element) {
 				switch (element.getAction()) {
 				case EXCLUDE: return Msg.exclude.get();
+				case INCLUDE: return Msg.include.get();
 				case DETECT_MIME: return Msg.detect_mime_type.get();
 				}
 				throw new IllegalStateException();

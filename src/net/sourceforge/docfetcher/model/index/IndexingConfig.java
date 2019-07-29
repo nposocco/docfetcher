@@ -23,15 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import net.sourceforge.docfetcher.enums.Msg;
-import net.sourceforge.docfetcher.enums.ProgramConf;
-import net.sourceforge.docfetcher.model.Path;
-import net.sourceforge.docfetcher.model.UtilModel;
-import net.sourceforge.docfetcher.model.index.file.SolidArchiveFactory;
-import net.sourceforge.docfetcher.util.Util;
-import net.sourceforge.docfetcher.util.annotations.Immutable;
-import net.sourceforge.docfetcher.util.annotations.NotNull;
-import net.sourceforge.docfetcher.util.annotations.Nullable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -41,6 +32,15 @@ import de.schlichtherle.truezip.fs.FsDriver;
 import de.schlichtherle.truezip.fs.FsDriverProvider;
 import de.schlichtherle.truezip.fs.FsScheme;
 import de.schlichtherle.truezip.fs.sl.FsDriverLocator;
+import net.sourceforge.docfetcher.enums.Msg;
+import net.sourceforge.docfetcher.enums.ProgramConf;
+import net.sourceforge.docfetcher.model.Path;
+import net.sourceforge.docfetcher.model.UtilModel;
+import net.sourceforge.docfetcher.model.index.file.SolidArchiveFactory;
+import net.sourceforge.docfetcher.util.Util;
+import net.sourceforge.docfetcher.util.annotations.Immutable;
+import net.sourceforge.docfetcher.util.annotations.NotNull;
+import net.sourceforge.docfetcher.util.annotations.Nullable;
 
 /**
  * Should not be subclassed outside the package group of this class.

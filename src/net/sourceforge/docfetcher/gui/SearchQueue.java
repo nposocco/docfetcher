@@ -19,9 +19,15 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+
 import net.sourceforge.docfetcher.enums.Img;
 import net.sourceforge.docfetcher.enums.Msg;
-import net.sourceforge.docfetcher.enums.ProgramConf;
+import net.sourceforge.docfetcher.enums.SettingsConf;
 import net.sourceforge.docfetcher.gui.ResultPanel.HeaderMode;
 import net.sourceforge.docfetcher.gui.filter.FileTypePanel;
 import net.sourceforge.docfetcher.gui.filter.FilesizePanel;
@@ -41,12 +47,6 @@ import net.sourceforge.docfetcher.util.annotations.NotNull;
 import net.sourceforge.docfetcher.util.annotations.Nullable;
 import net.sourceforge.docfetcher.util.collect.ListMap;
 import net.sourceforge.docfetcher.util.collect.ListMap.Entry;
-
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 
 /**
  * @author Tran Nam Quang
@@ -150,6 +150,7 @@ public final class SearchQueue {
 				try {
 					queue.add(GuiEvent.TYPE);
 					queueNotEmpty.signal();
+					updateParsersConfig();
 				}
 				finally {
 					lock.unlock();
@@ -317,7 +318,8 @@ public final class SearchQueue {
 		Util.runSyncExec(searchBar.getControl(), new Runnable() {
 			public void run() {
 				resultPanel.setResults(visibleResults, mode);
-				resultPanel.sortByColumn(ProgramConf.Int.InitialSorting.get());
+				resultPanel.sortByColumn(SettingsConf.Int.InitialSorting.get());
+				
 				if (queueCopy.contains(GuiEvent.SEARCH_OR_LIST))
 					resultPanel.getControl().setFocus();
 				updateResultStatus(); // Must be done *after* setting the results
@@ -354,6 +356,20 @@ public final class SearchQueue {
 		if (selCount > 1)
 			msg += spaces + Msg.num_sel_results.format(selCount);
 		statusBar.getLeftPart().setContents(Img.INFO.get(), msg);
+	}
+	
+	private void updateParsersConfig() {
+		ListMap<Parser, Boolean> map = fileTypePanel.getParserStateMap();
+		ArrayList<String> config = new ArrayList<String>();
+		for (Entry<Parser, Boolean> entry : map) {
+			if (!entry.getValue())
+				continue;
+			String parserName = entry.getKey()
+					.getClass()
+					.getSimpleName();
+			config.add(parserName);
+			SettingsConf.StrList.SearchParsers.set(config);
+		}
 	}
 
 }

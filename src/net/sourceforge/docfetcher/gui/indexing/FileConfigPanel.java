@@ -14,6 +14,15 @@ package net.sourceforge.docfetcher.gui.indexing;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
+
 import net.sourceforge.docfetcher.enums.Msg;
 import net.sourceforge.docfetcher.enums.SettingsConf;
 import net.sourceforge.docfetcher.gui.UtilGui;
@@ -27,15 +36,6 @@ import net.sourceforge.docfetcher.util.Util;
 import net.sourceforge.docfetcher.util.annotations.NotNull;
 import net.sourceforge.docfetcher.util.collect.LazyList;
 import net.sourceforge.docfetcher.util.gui.GroupWrapper;
-
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Group;
 
 /**
  * @author Tran Nam Quang
@@ -202,8 +202,8 @@ final class FileConfigPanel extends ConfigPanel {
 	protected void restoreDefaults() {
 		IndexingConfig config = index.getConfig();
 		
-		extGroupWrapper.setTextExtensions(config.getTextExtensions());
-		extGroupWrapper.setZipExtensions(config.getZipExtensions());
+		extGroupWrapper.setTextExtensions(SettingsConf.StrList.defaultTextExtensions.get());
+		extGroupWrapper.setZipExtensions(SettingsConf.StrList.defaultZipExtensions.get());
 		patternTable.restoreDefaults();
 		
 		htmlPairingBt.setSelection(config.isHtmlPairing());

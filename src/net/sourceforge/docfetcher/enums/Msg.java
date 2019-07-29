@@ -506,6 +506,7 @@ public enum Msg {
 	relative_path ("Relative path"),
 	absolute_path ("Absolute path"),
 	action ("Action"),
+	include ("Include"),
 	exclude ("Exclude"),
 	detect_mime_type ("Detect mime type (slower)"),
 	add_pattern ("Add Pattern"),
@@ -671,6 +672,10 @@ public enum Msg {
 	shift_key ("Shift"),
 	ctrl_key ("Ctrl"),
 	command_key ("Command"),
+	
+	// Config options
+	save_current_ordering ("Save current ordering"),
+	save_setting ("Save setting"),
 		
 	// Result panel and status bar
 	num_results ("Results: {0}"),

@@ -26,6 +26,31 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+
 import net.sourceforge.docfetcher.Main;
 import net.sourceforge.docfetcher.enums.Img;
 import net.sourceforge.docfetcher.enums.Msg;
@@ -72,31 +97,6 @@ import net.sourceforge.docfetcher.util.gui.dialog.InfoDialog;
 import net.sourceforge.docfetcher.util.gui.dialog.ListConfirmDialog;
 import net.sourceforge.docfetcher.util.gui.dialog.MultipleChoiceDialog;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.ControlListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-
 public final class Application {
 
 	// TODO post-release-1.1: review visibility of all DocFetcher classes
@@ -106,7 +106,8 @@ public final class Application {
 
 	private static volatile IndexRegistry indexRegistry;
 	private static volatile FolderWatcher folderWatcher;
-	@Nullable private static HotkeyHandler hotkeyHandler;
+	@Nullable
+	private static HotkeyHandler hotkeyHandler;
 	private static File programConfFile;
 
 	private static FilesizePanel filesizePanel;
@@ -123,7 +124,7 @@ public final class Application {
 	private static StatusBar statusBar;
 	private static boolean systemTrayShutdown = false;
 	private static File settingsConfFile;
-	
+
 	private static boolean indexRegistryLoaded = false; // should only be accessed from SWT thread
 	private static Runnable clearIndexLoadingMsg; // should only be accessed from SWT thread
 
@@ -135,27 +136,26 @@ public final class Application {
 		/*
 		 * Bug #3553412: Starting with Java 7, calling Arrays.sort can cause an
 		 * IllegalArgumentException with the error message
-		 * "Comparison method violates its general contract!". In DocFetcher,
-		 * this happened on a PDF file with PDFBox 1.7.0. For background, see
+		 * "Comparison method violates its general contract!". In DocFetcher, this
+		 * happened on a PDF file with PDFBox 1.7.0. For background, see
 		 * http://stackoverflow.com/questions/7849539/comparison-method
 		 * -violates-its-general-contract-java-7-only
 		 */
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
-		
+
 		/*
-		 * Load system constants; this should be the very first thing to do.
-		 * We'll first try to load from the jar (normal use case), then from a
-		 * file (we're inside the IDE).
+		 * Load system constants; this should be the very first thing to do. We'll first
+		 * try to load from the jar (normal use case), then from a file (we're inside
+		 * the IDE).
 		 */
 		String systemConfName = "system-conf.txt";
 		String systemConfPath = "dev/system-conf.txt";
-		boolean success = ConfLoader.loadFromStreamOrFile(
-			Main.class, SystemConf.class, systemConfName, systemConfPath);
+		boolean success = ConfLoader.loadFromStreamOrFile(Main.class, SystemConf.class, systemConfName, systemConfPath);
 		if (!success) {
 			/*
-			 * This is pretty bad, just give up here. Note that we cannot use
-			 * the stacktrace utility methods at this point because we haven't
-			 * loaded the constants in the utility class yet.
+			 * This is pretty bad, just give up here. Note that we cannot use the stacktrace
+			 * utility methods at this point because we haven't loaded the constants in the
+			 * utility class yet.
 			 */
 			Util.printErr("Couldn't find resource: " + systemConfName);
 			System.exit(1);
@@ -188,25 +188,22 @@ public final class Application {
 			confPathOverride = toFile(pathProps, "settings");
 			IndexRegistry.indexPathOverride = toFile(pathProps, "indexes");
 			swtLibDir = toFile(pathProps, "swt");
-		}
-		catch (IOException e1) {
+		} catch (IOException e1) {
 			// Ignore
 		}
-		
+
 		/*
-		 * Set the path from which to load the native SWT libraries. This must
-		 * be done before doing the single instance check, because that's where
-		 * we're going to use SWT for the first time, by opening a message
-		 * dialog.
+		 * Set the path from which to load the native SWT libraries. This must be done
+		 * before doing the single instance check, because that's where we're going to
+		 * use SWT for the first time, by opening a message dialog.
 		 *
 		 * If we don't set the path, SWT will extract its native libraries into
-		 * ${user.home}/.swt. This is unsuitable especially for the portable
-		 * version of DocFetcher, which should not leave any files in the
-		 * system.
+		 * ${user.home}/.swt. This is unsuitable especially for the portable version of
+		 * DocFetcher, which should not leave any files in the system.
 		 * 
-		 * Bug #399: The DLLs for 32-bit and 64-bit Windows have the same names,
-		 * so we must extract them into separate directories in order to avoid
-		 * name clashes, which would cause the program to fail during startup.
+		 * Bug #399: The DLLs for 32-bit and 64-bit Windows have the same names, so we
+		 * must extract them into separate directories in order to avoid name clashes,
+		 * which would cause the program to fail during startup.
 		 * https://sourceforge.net/p/docfetcher/bugs/399/
 		 */
 		String swtLibSuffix;
@@ -228,11 +225,11 @@ public final class Application {
 			swtLibDir = new File(swtLibDir, swtLibSuffix);
 		swtLibDir.mkdirs(); // SWT won't recognize the path if it doesn't exist
 		System.setProperty("swt.library.path", Util.getAbsPath(swtLibDir));
-		
+
 		// Load program configuration and preferences
 		programConfFile = loadProgramConf(confPathOverride);
 		settingsConfFile = loadSettingsConf(confPathOverride);
-		
+
 		// Update indexes in headless mode
 		if (args.length >= 1 && args[0].equals("--update-indexes")) {
 			loadIndexRegistryHeadless(getIndexParentDir(IndexRegistry.indexPathOverride));
@@ -242,7 +239,7 @@ public final class Application {
 		// Check single instance
 		if (!AppUtil.checkSingleInstance())
 			return;
-		
+
 		checkMultipleDocFetcherJars();
 
 		// Determine shell title
@@ -260,17 +257,13 @@ public final class Application {
 		loadIndexRegistry(shell, getIndexParentDir(IndexRegistry.indexPathOverride));
 
 		// Load images
-		LazyImageCache lazyImageCache = new LazyImageCache(
-			display, AppUtil.getImageDir());
+		LazyImageCache lazyImageCache = new LazyImageCache(display, AppUtil.getImageDir());
 		Img.initialize(lazyImageCache);
-		lazyImageCache.reportMissingFiles(
-			shell, Img.class, Msg.missing_image_files.get());
+		lazyImageCache.reportMissingFiles(shell, Img.class, Msg.missing_image_files.get());
 
 		// Set shell icons, must be done *after* loading the images
-		shell.setImages(new Image[] {
-			Img.DOCFETCHER_16.get(), Img.DOCFETCHER_32.get(),
-			Img.DOCFETCHER_48.get(), Img.DOCFETCHER_64.get(),
-			Img.DOCFETCHER_128.get()});
+		shell.setImages(new Image[] { Img.DOCFETCHER_16.get(), Img.DOCFETCHER_32.get(), Img.DOCFETCHER_48.get(),
+				Img.DOCFETCHER_64.get(), Img.DOCFETCHER_128.get() });
 
 		// Set default uncaught exception handler
 		Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
@@ -291,9 +284,7 @@ public final class Application {
 		initHotkey();
 		initGlobalKeys(display);
 
-		new SearchQueue(
-			searchBar, filesizePanel, fileTypePanel, indexPanel, resultPanel,
-			statusBar);
+		new SearchQueue(searchBar, filesizePanel, fileTypePanel, indexPanel, resultPanel, statusBar);
 
 		FormDataFactory fdf = FormDataFactory.getInstance();
 		fdf.bottom().left().right().applyTo(statusBar);
@@ -304,15 +295,13 @@ public final class Application {
 
 		// Try to show the manual in the embedded browser
 		boolean showManualHint = true;
-		if (SettingsConf.Bool.ShowManualOnStartup.get()
-				&& SettingsConf.Bool.ShowPreviewPanel.get()) {
+		if (SettingsConf.Bool.ShowManualOnStartup.get() && SettingsConf.Bool.ShowPreviewPanel.get()) {
 			File file = ManualLocator.getManualFile();
 			if (file == null) {
 				showManualHint = false;
 				String msg = Msg.file_not_found.get() + "\n" + ManualLocator.manualFilename;
 				AppUtil.showError(msg, true, true);
-			}
-			else if (previewPanel.setHtmlFile(file)) {
+			} else if (previewPanel.setHtmlFile(file)) {
 				showManualHint = false;
 			}
 		}
@@ -332,20 +321,19 @@ public final class Application {
 			try {
 				if (!display.readAndDispatch())
 					display.sleep();
-			}
-			catch (Throwable t) {
+			} catch (Throwable t) {
 				handleCrash(t);
 			}
 		}
 
 		/*
-		 * Do not set this to null; the index registry loading thread must be
-		 * able to see that the display was disposed.
+		 * Do not set this to null; the index registry loading thread must be able to
+		 * see that the display was disposed.
 		 */
 		display.dispose();
 		saveSettingsConfFile();
 	}
-	
+
 	@Nullable
 	private static File toFile(@NotNull Properties props, @NotNull String key) {
 		String value = props.getProperty(key);
@@ -360,7 +348,7 @@ public final class Application {
 		}
 		return Util.getCanonicalFile(value);
 	}
-	
+
 	private static void handleCrash(@NotNull Throwable t) {
 		for (OutOfMemoryError e : Iterables.filter(Throwables.getCausalChain(t), OutOfMemoryError.class)) {
 			UtilGui.showOutOfMemoryMessage(shell, e);
@@ -371,20 +359,19 @@ public final class Application {
 
 	private static void saveSettingsConfFile() {
 		/*
-		 * Try to save the settings. This may not be possible, for example when
-		 * the user has burned the program onto a CD-ROM.
+		 * Try to save the settings. This may not be possible, for example when the user
+		 * has burned the program onto a CD-ROM.
 		 */
 		if (settingsConfFile.canWrite()) {
 			try {
 				String comment = SettingsConf.loadHeaderComment();
 				ConfLoader.save(settingsConfFile, SettingsConf.class, comment);
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				AppUtil.showStackTraceInOwnDisplay(e);
 			}
 		}
 	}
-	
+
 	/**
 	 * Checks for multiple loaded DocFetcher jars. This should be called before
 	 * creating the display.
@@ -408,9 +395,8 @@ public final class Application {
 
 	private static void initGlobalKeys(@NotNull Display display) {
 		/*
-		 * This filter must be added to SWT.KeyDown rather than SWT.KeyUp,
-		 * otherwise we won't be able to prevent the events from propagating
-		 * further.
+		 * This filter must be added to SWT.KeyDown rather than SWT.KeyUp, otherwise we
+		 * won't be able to prevent the events from propagating further.
 		 */
 		display.addFilter(SWT.KeyDown, new Listener() {
 			public void handleEvent(org.eclipse.swt.widgets.Event e) {
@@ -430,28 +416,24 @@ public final class Application {
 					StatusBarPart statusBarPart = statusBar.getLeftPart();
 					if (msg.equals(statusBarPart.getText()))
 						statusBarPart.setContents(null, "");
-				}
-				else if ((m & (SWT.ALT | SWT.CTRL | SWT.COMMAND)) != 0 && k == 'f') {
+				} else if ((m & (SWT.ALT | SWT.CTRL | SWT.COMMAND)) != 0 && k == 'f') {
 					searchBar.setFocus();
-				}
-				else {
+				} else {
 					e.doit = true;
 				}
 			}
 		});
 	}
-	
+
 	@NotNull
 	private static File getIndexParentDir(@Nullable File pathOverride) {
 		File indexParentDir;
 		if (SystemConf.Bool.IsDevelopmentVersion.get()) {
 			indexParentDir = new File("bin/indexes");
-		}
-		else if (pathOverride != null && !pathOverride.isFile()) {
+		} else if (pathOverride != null && !pathOverride.isFile()) {
 			pathOverride.mkdirs();
 			indexParentDir = pathOverride;
-		}
-		else {
+		} else {
 			File appDataDir = AppUtil.getAppDataDir();
 			if (SystemConf.Bool.IsPortable.get())
 				indexParentDir = new File(appDataDir, "indexes");
@@ -468,8 +450,7 @@ public final class Application {
 
 		int cacheCapacity = ProgramConf.Int.UnpackCacheCapacity.get();
 		int reporterCapacity = ProgramConf.Int.MaxLinesInProgressPanel.get();
-		indexRegistry = new IndexRegistry(
-			indexParentDir, cacheCapacity, reporterCapacity);
+		indexRegistry = new IndexRegistry(indexParentDir, cacheCapacity, reporterCapacity);
 		final Daemon daemon = new Daemon(indexRegistry);
 		IndexingQueue queue = indexRegistry.getQueue();
 
@@ -480,19 +461,17 @@ public final class Application {
 		});
 
 		/*
-		 * Remove indexing hint from the status bar when the task
-		 * queue has been emptied. This covers those situations
-		 * where the indexing dialog has been minimized to the
-		 * status bar and the last task in the queue has just been
+		 * Remove indexing hint from the status bar when the task queue has been
+		 * emptied. This covers those situations where the indexing dialog has been
+		 * minimized to the status bar and the last task in the queue has just been
 		 * completed.
 		 */
 		queue.evtQueueEmpty.add(new Event.Listener<Void>() {
 			public void update(Void eventData) {
 				/*
-				 * Bug #3485598: The indexing status widget can be null at this
-				 * point. Possible explanation: An indexing update was issued by
-				 * the DocFetcher daemon and finished before the GUI was fully
-				 * initialized.
+				 * Bug #3485598: The indexing status widget can be null at this point. Possible
+				 * explanation: An indexing update was issued by the DocFetcher daemon and
+				 * finished before the GUI was fully initialized.
 				 */
 				if (indexingStatus == null)
 					return;
@@ -512,7 +491,7 @@ public final class Application {
 							return display.isDisposed();
 						}
 					});
-					
+
 					// Program may have been shut down while it was loading the indexes
 					if (display.isDisposed())
 						return;
@@ -520,12 +499,10 @@ public final class Application {
 					/*
 					 * Install folder watches on the user's document folders.
 					 *
-					 * This should be done *after* the index registry is loaded:
-					 * The index registry will try to install its own folder
-					 * watch during loading, and if we set up this folder
-					 * watcher before loading the registry, we might take up all
-					 * the allowed watches, so that there's none left for the
-					 * registry.
+					 * This should be done *after* the index registry is loaded: The index registry
+					 * will try to install its own folder watch during loading, and if we set up
+					 * this folder watcher before loading the registry, we might take up all the
+					 * allowed watches, so that there's none left for the registry.
 					 */
 					folderWatcher = new FolderWatcher(indexRegistry);
 
@@ -546,17 +523,15 @@ public final class Application {
 
 					// Must be called *after* the indexes have been loaded
 					daemon.enqueueUpdateTasks();
-					
+
 					// Confirm deletion of obsolete files inside the index
 					// folder
 					if (ProgramConf.Bool.ReportObsoleteIndexFiles.get()
 							&& !loadingProblems.getObsoleteFiles().isEmpty()) {
 						Util.runSyncExec(mainShell, new Runnable() {
 							public void run() {
-								reportObsoleteIndexFiles(
-									mainShell,
-									indexRegistry.getIndexParentDir(),
-									loadingProblems.getObsoleteFiles());
+								reportObsoleteIndexFiles(mainShell, indexRegistry.getIndexParentDir(),
+										loadingProblems.getObsoleteFiles());
 							}
 						});
 					}
@@ -574,14 +549,12 @@ public final class Application {
 						}
 						AppUtil.showError(msg.toString(), true, false);
 					}
-				}
-				catch (IOException e) {
+				} catch (IOException e) {
 					if (display.isDisposed())
 						AppUtil.showStackTraceInOwnDisplay(e);
 					else
 						AppUtil.showStackTrace(e);
-				}
-				finally {
+				} finally {
 					Util.runAsyncExec(mainShell, new Runnable() {
 						public void run() {
 							indexRegistryLoaded = true;
@@ -593,17 +566,16 @@ public final class Application {
 			}
 		}.start();
 	}
-	
+
 	private static void loadIndexRegistryHeadless(@NotNull File indexParentDir) {
 		int cacheCapacity = ProgramConf.Int.UnpackCacheCapacity.get();
 		int reporterCapacity = ProgramConf.Int.MaxLinesInProgressPanel.get();
-		indexRegistry = new IndexRegistry(
-			indexParentDir, cacheCapacity, reporterCapacity);
-		
+		indexRegistry = new IndexRegistry(indexParentDir, cacheCapacity, reporterCapacity);
+
 		try {
 			indexRegistry.load(Cancelable.nullCancelable);
 			final IndexingQueue queue = indexRegistry.getQueue();
-			
+
 			queue.evtQueueEmpty.add(new Event.Listener<Void>() {
 				public void update(Void eventData) {
 					indexRegistry.getSearcher().shutdown();
@@ -614,23 +586,21 @@ public final class Application {
 					});
 				}
 			});
-			
+
 			for (LuceneIndex index : indexRegistry.getIndexes())
 				queue.addTask(index, IndexAction.UPDATE);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			Util.printErr(e);
 		}
 	}
-	
-	private static void reportObsoleteIndexFiles(	@NotNull Shell mainShell,
-	                                             	@NotNull File indexDir,
-													@NotNull List<File> filesToDelete) {
+
+	private static void reportObsoleteIndexFiles(@NotNull Shell mainShell, @NotNull File indexDir,
+			@NotNull List<File> filesToDelete) {
 		ListConfirmDialog dialog = new ListConfirmDialog(mainShell, SWT.ICON_INFORMATION);
 		dialog.setTitle(Msg.confirm_operation.get());
 		dialog.setText(Msg.delete_obsolete_index_files.format(indexDir.getPath()));
 		dialog.setButtonLabels(Msg.delete_bt.get(), Msg.keep.get());
-		
+
 		filesToDelete = new ArrayList<File>(filesToDelete);
 		Collections.sort(filesToDelete, new Comparator<File>() {
 			public int compare(File o1, File o2) {
@@ -643,24 +613,23 @@ public final class Application {
 				return AlphanumComparator.ignoreCaseInstance.compare(o1.getName(), o2.getName());
 			}
 		});
-		
+
 		for (File file : filesToDelete) {
 			Image img = (file.isDirectory() ? Img.FOLDER : Img.FILE).get();
 			dialog.addItem(img, file.getName());
 		}
-		
+
 		dialog.evtLinkClicked.add(new Event.Listener<String>() {
 			public void update(String eventData) {
 				Util.launch(eventData);
 			}
 		});
-		
+
 		if (dialog.open()) {
 			for (File file : filesToDelete) {
 				try {
 					Util.deleteRecursively(file);
-				}
-				catch (IOException e) {
+				} catch (IOException e) {
 					Util.printErr(e);
 				}
 			}
@@ -674,22 +643,18 @@ public final class Application {
 		File confFile;
 		if (SystemConf.Bool.IsDevelopmentVersion.get()) {
 			confFile = new File("dist/program-conf.txt");
-		}
-		else if (pathOverride != null && !pathOverride.isFile()) {
+		} else if (pathOverride != null && !pathOverride.isFile()) {
 			pathOverride.mkdirs();
 			confFile = new File(pathOverride, "program-conf.txt");
-		}
-		else {
+		} else {
 			File appDataDir = AppUtil.getAppDataDir();
 			confFile = new File(appDataDir, "conf/program-conf.txt");
 		}
 
 		try {
-			List<Loadable> notLoaded = ConfLoader.load(
-				confFile, ProgramConf.class, false);
+			List<Loadable> notLoaded = ConfLoader.load(confFile, ProgramConf.class, false);
 			if (!notLoaded.isEmpty()) {
-				List<String> entryNames = new ArrayList<String>(
-					notLoaded.size());
+				List<String> entryNames = new ArrayList<String>(notLoaded.size());
 				for (Loadable entry : notLoaded)
 					entryNames.add("  " + entry.name());
 				String msg = Msg.entries_missing.format(confFile.getName());
@@ -700,11 +665,9 @@ public final class Application {
 					regenerateConfFile(confFile);
 				}
 			}
-		}
-		catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			regenerateConfFile(confFile);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			AppUtil.showStackTraceInOwnDisplay(e);
 		}
 		return confFile;
@@ -712,26 +675,22 @@ public final class Application {
 
 	private static void regenerateConfFile(File confFile) {
 		/*
-		 * Restore conf file if missing. In case of the non-portable
-		 * version, the conf file will be missing the first time the program
-		 * is started.
+		 * Restore conf file if missing. In case of the non-portable version, the conf
+		 * file will be missing the first time the program is started.
 		 */
 		InputStream in = Main.class.getResourceAsStream(confFile.getName());
 		try {
 			ConfLoader.load(in, ProgramConf.class);
 			URL url = Resources.getResource(Main.class, confFile.getName());
 			Util.getParentFile(confFile).mkdirs();
-			Files.copy(
-				Resources.newInputStreamSupplier(url), confFile);
-		}
-		catch (Exception e1) {
+			Files.copy(Resources.newInputStreamSupplier(url), confFile);
+		} catch (Exception e1) {
 			AppUtil.showStackTraceInOwnDisplay(e1);
-		}
-		finally {
+		} finally {
 			Closeables.closeQuietly(in);
 		}
 	}
-	
+
 	private static File loadSettingsConf(@Nullable File pathOverride) {
 		AppUtil.checkConstInitialized();
 		AppUtil.ensureNoDisplay();
@@ -739,20 +698,17 @@ public final class Application {
 		File confFile;
 		if (SystemConf.Bool.IsDevelopmentVersion.get()) {
 			confFile = new File("bin/settings-conf.txt");
-		}
-		else if (pathOverride != null && !pathOverride.isFile()) {
+		} else if (pathOverride != null && !pathOverride.isFile()) {
 			pathOverride.mkdirs();
 			confFile = new File(pathOverride, "settings-conf.txt");
-		}
-		else {
+		} else {
 			File appDataDir = AppUtil.getAppDataDir();
 			confFile = new File(appDataDir, "conf/settings-conf.txt");
 		}
 
 		try {
 			ConfLoader.load(confFile, SettingsConf.class, true);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			AppUtil.showStackTraceInOwnDisplay(e);
 		}
 		return confFile;
@@ -770,9 +726,7 @@ public final class Application {
 					public void mouseUp(MouseEvent e) {
 						boolean isVisible = !isContentsVisible();
 						setContentsVisible(isVisible);
-						Image image = isVisible
-							? Img.MINIMIZE.get()
-							: Img.MAXIMIZE.get();
+						Image image = isVisible ? Img.MINIMIZE.get() : Img.MAXIMIZE.get();
 						item.setImage(image);
 						comp.layout();
 						SettingsConf.Bool.FilesizeFilterMaximized.set(isVisible);
@@ -795,11 +749,13 @@ public final class Application {
 				// TODO websearch: Load parser states from file, save parser states to file?
 				List<Parser> parsers = ParseService.getParsers();
 				ListMap<Parser, Boolean> map = ListMap.create(parsers.size());
-				for (Parser parser : parsers)
-					map.add(parser, true);
+				for (Parser parser : parsers) {
+					map.add(parser, SettingsConf.StrList.SearchParsers.get().contains(parser.getClass().getSimpleName()) );
+				}
 				fileTypePanel = new FileTypePanel(parent, map);
 				return fileTypePanel.getControl();
 			}
+
 			protected Control createSecondContents(Composite parent) {
 				indexPanel = new IndexPanel(parent, indexRegistry);
 				indexPanel.evtIndexingDialogMinimized.add(new Event.Listener<Rectangle>() {
@@ -809,6 +765,7 @@ public final class Application {
 				});
 				return indexPanel.getControl();
 			}
+
 			protected void onMaximizationChanged() {
 				// Save maximization states
 				MaximizedControl maxControl = getMaximizedControl();
@@ -821,8 +778,7 @@ public final class Application {
 		expander.setTopText(Msg.document_types.get());
 		if (indexRegistryLoaded) {
 			expander.setBottomText(Msg.search_scope.get());
-		}
-		else {
+		} else {
 			expander.setBottomText(Msg.search_scope.get() + " (" + Msg.loading.get() + ")");
 			clearIndexLoadingMsg = new Runnable() {
 				public void run() {
@@ -832,7 +788,7 @@ public final class Application {
 			};
 		}
 		expander.setSashWidth(sashWidth);
-		
+
 		// Restore sash weights and maximization states
 		expander.setSashWeights(SettingsConf.IntArray.FilterSash.get());
 		if (SettingsConf.Bool.TypesFilterMaximized.get())
@@ -866,10 +822,10 @@ public final class Application {
 	private static Control createRightTopPanel(Composite parent) {
 		Composite comp = new Composite(parent, SWT.NONE);
 		searchBar = new SearchBar(comp, programConfFile);
-		searchBar.evtOKClicked.add(new Event.Listener<Void> () {
-		    public void update(Void eventData) {
-		    	saveSettingsConfFile();
-		    }
+		searchBar.evtOKClicked.add(new Event.Listener<Void>() {
+			public void update(Void eventData) {
+				saveSettingsConfFile();
+			}
 		});
 		resultPanel = new ResultPanel(comp);
 
@@ -925,12 +881,10 @@ public final class Application {
 		systemTrayHider.evtHiding.add(new Event.Listener<Void>() {
 			public void update(Void eventData) {
 				/*
-				 * If DocFetcher is sent to the system tray while being
-				 * maximized and showing a big file on the preview panel, one
-				 * would experience an annoying delay once the program returns
-				 * from the system tray. The workaround is to clear the preview
-				 * panel before going to the system tray and reset it when we
-				 * come back.
+				 * If DocFetcher is sent to the system tray while being maximized and showing a
+				 * big file on the preview panel, one would experience an annoying delay once
+				 * the program returns from the system tray. The workaround is to clear the
+				 * preview panel before going to the system tray and reset it when we come back.
 				 */
 				lastDoc[0] = previewPanel.clear();
 			}
@@ -973,10 +927,10 @@ public final class Application {
 		}, new Runnable() {
 			public void run() {
 				PrefDialog prefDialog = new PrefDialog(shell, programConfFile);
-				prefDialog.evtOKClicked.add(new Event.Listener<Void> () {
-				    public void update(Void eventData) {
-				    	saveSettingsConfFile();
-				    }
+				prefDialog.evtOKClicked.add(new Event.Listener<Void>() {
+					public void update(Void eventData) {
+						saveSettingsConfFile();
+					}
 				});
 				prefDialog.open();
 			}
@@ -990,9 +944,11 @@ public final class Application {
 			protected Control createFirstControl(Composite parent) {
 				return createLeftPanel(parent);
 			}
+
 			protected Control createFirstSubControl(Composite parent) {
 				return createRightTopPanel(parent);
 			}
+
 			protected Control createSecondSubControl(Composite parent) {
 				previewPanel = new PreviewPanel(parent);
 				previewPanel.evtHideInSystemTray.add(new Event.Listener<Void>() {
@@ -1060,9 +1016,8 @@ public final class Application {
 		});
 
 		/*
-		 * Temporarily deactivate storing the sash weights during sash
-		 * orientation changes. Without this, we'd set the same sash weights for
-		 * both orientations.
+		 * Temporarily deactivate storing the sash weights during sash orientation
+		 * changes. Without this, we'd set the same sash weights for both orientations.
 		 */
 		threePanelForm.evtSubOrientationChanging.add(new Event.Listener<Boolean>() {
 			public void update(Boolean isVertical) {
@@ -1082,9 +1037,8 @@ public final class Application {
 
 	@NotNull
 	private static int[] getRightSashWeights(boolean isVertical) {
-		return isVertical
-			? SettingsConf.IntArray.RightSashVertical.get()
-			: SettingsConf.IntArray.RightSashHorizontal.get();
+		return isVertical ? SettingsConf.IntArray.RightSashVertical.get()
+				: SettingsConf.IntArray.RightSashHorizontal.get();
 	}
 
 	@NotNull
@@ -1137,15 +1091,15 @@ public final class Application {
 
 			/*
 			 * Note: The getSearcher() call below will block until the searcher is
-			 * available. If we run this inside the GUI thread, we won't let go of
-			 * the GUI lock, causing the program to deadlock when the user tries to
-			 * close the program before all indexes have been loaded.
+			 * available. If we run this inside the GUI thread, we won't let go of the GUI
+			 * lock, causing the program to deadlock when the user tries to close the
+			 * program before all indexes have been loaded.
 			 */
 			new Thread() {
 				public void run() {
 					/*
-					 * The folder watcher will be null if the program is shut down
-					 * while loading the indexes
+					 * The folder watcher will be null if the program is shut down while loading the
+					 * indexes
 					 */
 					if (folderWatcher != null)
 						folderWatcher.shutdown();
@@ -1162,23 +1116,20 @@ public final class Application {
 	private static void initHotkey() {
 		try {
 			hotkeyHandler = new HotkeyHandler();
-		}
-		catch (UnsupportedOperationException e) {
+		} catch (UnsupportedOperationException e) {
 			return;
-		}
-		catch (Throwable e) {
+		} catch (Throwable e) {
 			Util.printErr(e);
 			return;
 		}
 
-		hotkeyHandler.evtHotkeyPressed.add(new Event.Listener<Void> () {
+		hotkeyHandler.evtHotkeyPressed.add(new Event.Listener<Void>() {
 			public void update(Void eventData) {
 				Util.runSyncExec(shell, new Runnable() {
 					public void run() {
 						if (systemTrayHider.isHidden()) {
 							systemTrayHider.restore();
-						}
-						else {
+						} else {
 							shell.setMinimized(false);
 							shell.setVisible(true);
 							shell.forceActive();
@@ -1188,21 +1139,20 @@ public final class Application {
 				});
 			}
 		});
-		hotkeyHandler.evtHotkeyConflict.add(new Event.Listener<int[]> () {
+		hotkeyHandler.evtHotkeyConflict.add(new Event.Listener<int[]>() {
 			public void update(int[] eventData) {
 				String key = UtilGui.toString(eventData);
 				AppUtil.showError(Msg.hotkey_in_use.format(key), false, true);
 
 				/*
-				 * Don't open preferences dialog when the hotkey conflict occurs
-				 * at startup.
+				 * Don't open preferences dialog when the hotkey conflict occurs at startup.
 				 */
 				if (shell.isVisible()) {
 					PrefDialog prefDialog = new PrefDialog(shell, programConfFile);
-					prefDialog.evtOKClicked.add(new Event.Listener<Void> () {
-					    public void update(Void eventData) {
-					    	saveSettingsConfFile();
-					    }
+					prefDialog.evtOKClicked.add(new Event.Listener<Void>() {
+						public void update(Void eventData) {
+							saveSettingsConfFile();
+						}
 					});
 					prefDialog.open();
 				}
@@ -1229,8 +1179,7 @@ public final class Application {
 				threePanelForm.setSecondSubControlVisible(true);
 			else
 				Util.launch(file);
-		}
-		else {
+		} else {
 			String msg = Msg.file_not_found.get() + "\n" + ManualLocator.manualFilename;
 			AppUtil.showError(msg, true, true);
 		}
