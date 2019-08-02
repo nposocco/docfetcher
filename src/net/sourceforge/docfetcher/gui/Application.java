@@ -750,7 +750,9 @@ public final class Application {
 				List<Parser> parsers = ParseService.getParsers();
 				ListMap<Parser, Boolean> map = ListMap.create(parsers.size());
 				for (Parser parser : parsers) {
-					map.add(parser, SettingsConf.StrList.SearchParsers.get().contains(parser.getClass().getSimpleName()) );
+					if (SettingsConf.StrList.VisibleParsers.get().contains(parser.getClass().getSimpleName())) {
+						map.add(parser, SettingsConf.StrList.SearchParsers.get().contains(parser.getClass().getSimpleName()) );
+					}
 				}
 				fileTypePanel = new FileTypePanel(parent, map);
 				return fileTypePanel.getControl();

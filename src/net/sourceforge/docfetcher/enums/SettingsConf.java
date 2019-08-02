@@ -247,6 +247,7 @@ public final class SettingsConf {
 		defaultZipExtensions,
 		defaultTextExtensions("txt","java","cpp","py"),
 		SearchParsers("AbiWordParser","FLACParser","HtmlParser","ExifParser","MP3Parser","ChmParser","MSExcelParser","MSExcel2007Parser","MSPowerPointParser","MSPowerPoint2007Parser","MSVisioParser","MSWordParser","MSWord2007Parser","OpenOfficeCalcParser","OpenOfficeDrawParser","OpenOfficeImpressParser","OpenOfficeWriterParser","PdfParser","RtfParser","SvgParser","TextParser"),
+		VisibleParsers("AbiWordParser","FLACParser","HtmlParser","ExifParser","MP3Parser","ChmParser","MSExcelParser","MSExcel2007Parser","MSPowerPointParser","MSPowerPoint2007Parser","MSVisioParser","MSWordParser","MSWord2007Parser","OpenOfficeCalcParser","OpenOfficeDrawParser","OpenOfficeImpressParser","OpenOfficeWriterParser","PdfParser","RtfParser","SvgParser","TextParser"),
 		;
 
 		public final Event<List<String>> evtChanged = new Event<List<String>>();
