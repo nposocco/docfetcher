@@ -60,11 +60,11 @@ import net.sourceforge.docfetcher.util.gui.viewer.VirtualTableViewer.Column;
  * @author Tran Nam Quang
  */
 public final class ResultPanel {
-	
+
 	// TODO post-release-1.1: show an additional icon if an email has attachments
 	// TODO post-release-1.1: show some helpful overlay message if a search yielded no results
 	// TODO post-release-1.1: implement context menu: copy paths to clipboard, including Mod1+C shortcut (also: Mod1+A for selecting all items)
-	
+
 	public enum HeaderMode {
 		FILES { protected void setLabel(VariableHeaderColumn<?> column) {
 			column.setLabel(column.fileHeader);
@@ -76,9 +76,9 @@ public final class ResultPanel {
 			column.setLabel(column.combinedHeader);
 		} },
 		;
-		
+
 		protected abstract void setLabel(@NotNull VariableHeaderColumn<?> column);
-		
+
 		@NotNull
 		public static HeaderMode getInstance(boolean filesFound, boolean emailsFound) {
 			final HeaderMode mode;
@@ -89,20 +89,20 @@ public final class ResultPanel {
 			return mode;
 		}
 	}
-	
+
 	private static final DateFormat dateFormat = new SimpleDateFormat();
-	
+
 	public final Event<List<ResultDocument>> evtSelection = new Event<List<ResultDocument>> ();
 	public final Event<Void> evtHideInSystemTray = new Event<Void>();
-	
+
 	private final VirtualTableViewer<ResultDocument> viewer;
 	private final FileIconCache iconCache;
 	private HeaderMode presetHeaderMode = HeaderMode.FILES; // externally suggested header mode
-	private HeaderMode actualHeaderMode = HeaderMode.FILES; // header mode after examining each visible element 
+	private HeaderMode actualHeaderMode = HeaderMode.FILES; // header mode after examining each visible element
 
 	public ResultPanel(@NotNull Composite parent) {
 		iconCache = new FileIconCache(parent);
-		
+
 		int treeStyle = SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER;
 		viewer = new VirtualTableViewer<ResultDocument> (parent, treeStyle) {
 			@SuppressWarnings("unchecked")
@@ -110,7 +110,7 @@ public final class ResultPanel {
 				return (List<ResultDocument>) rootElement;
 			}
 		};
-		
+
 		// Open result document on double-click
 		Table table = viewer.getControl();
 		table.addMouseListener(new MouseAdapter() {
@@ -118,7 +118,7 @@ public final class ResultPanel {
 				launchSelection();
 			}
 		});
-		
+
 		table.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
 				if (Util.isEnterKey(e.keyCode))
@@ -127,16 +127,16 @@ public final class ResultPanel {
 					copyToClipboard();
 			}
 		});
-		
+
 		viewer.setSortingEnabled(true);
 		initContextMenu();
-		
+
 		table.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				evtSelection.fire(viewer.getSelection());
 			}
 		});
-		
+
 		viewer.addColumn(new VariableHeaderColumn<ResultDocument>(Msg.title.get(), Msg.subject.get()) {
 			protected String getLabel(ResultDocument element) {
 				return element.getTitle();
@@ -150,7 +150,7 @@ public final class ResultPanel {
 				return compareAlphanum(e1.getTitle(), e2.getTitle());
 			}
 		});
-		
+
 		viewer.addColumn(new Column<ResultDocument>(Msg.score.get(), SWT.RIGHT) {
 			protected String getLabel(ResultDocument element) {
 				return String.valueOf(element.getScore());
@@ -159,7 +159,7 @@ public final class ResultPanel {
 				return -1 * Float.compare(e1.getScore(), e2.getScore());
 			}
 		});
-		
+
 		viewer.addColumn(new Column<ResultDocument>(Msg.size.get(), SWT.RIGHT) {
 			protected String getLabel(ResultDocument element) {
 				return String.format("%,d KB", element.getSizeInKB());
@@ -188,7 +188,7 @@ public final class ResultPanel {
 				return compareAlphanum(e1.getType(), e2.getType());
 			}
 		});
-		
+
 		viewer.addColumn(new Column<ResultDocument>(Msg.path.get()) {
 			protected String getLabel(ResultDocument element) {
 				return element.getPath().getPath();
@@ -197,7 +197,7 @@ public final class ResultPanel {
 				return compareAlphanum(getLabel(e1), getLabel(e2));
 			}
 		});
-		
+
 		viewer.addColumn(new VariableHeaderColumn<ResultDocument>(Msg.authors.get(), Msg.sender.get()) {
 			protected String getLabel(ResultDocument element) {
 				return element.getAuthors();
@@ -206,7 +206,7 @@ public final class ResultPanel {
 				return compareAlphanum(e1.getAuthors(), e2.getAuthors());
 			}
 		});
-		
+
 		viewer.addColumn(new VariableHeaderColumn<ResultDocument>(Msg.last_modified.get(), Msg.send_date.get()) {
 			protected String getLabel(ResultDocument element) {
 				Date date = getDate(element);
@@ -228,11 +228,11 @@ public final class ResultPanel {
 				return element.getLastModified();
 			}
 		});
-		
+
 		SettingsConf.ColumnWidths.ResultPanel.bind(table);
 		SettingsConf.ColumnOrder.ResultPanelColumnOrder.bind(table);
 	}
-	
+
 	private void launchSelection() {
 		List<ResultDocument> selection = viewer.getSelection();
 		if (selection.isEmpty())
@@ -241,14 +241,14 @@ public final class ResultPanel {
 		if (!doc.isEmail())
 			launchFiles(Collections.singletonList(doc));
 	}
-	
+
 	private static int compareAlphanum(@NotNull String s1, @NotNull String s2) {
 		return AlphanumComparator.ignoreCaseInstance.compare(s1, s2);
 	}
 
 	private void initContextMenu() {
 		ContextMenuManager menuManager = new ContextMenuManager(viewer.getControl());
-		
+
 		menuManager.add(new MenuAction(Msg.open.get()) {
 			public boolean isEnabled() {
 				List<ResultDocument> sel = viewer.getSelection();
@@ -266,7 +266,7 @@ public final class ResultPanel {
 				return true;
 			}
 		});
-		
+
 		menuManager.add(new MenuAction(Msg.open_parent.get()) {
 			public boolean isEnabled() {
 				return !viewer.getSelection().isEmpty();
@@ -293,30 +293,30 @@ public final class ResultPanel {
 				 * - Path points to an ordinary file
 				 * - Path points to an archive entry
 				 * - Path points to an item in a PST file
-				 * 
+				 *
 				 * In each case, the target may or may not exist.
 				 */
 				PathParts pathParts = path.splitAtExistingFile();
-				
+
 				if (pathParts.getRight().isEmpty()) // Existing ordinary file
 					return Util.getParentFile(path.getCanonicalFile());
-				
+
 				File leftFile = pathParts.getLeft().getCanonicalFile();
 				if (leftFile.isDirectory())
 					// File, archive entry or PST item does not exist
 					throw new FileNotFoundException();
-				
+
 				// Existing PST item
 				if (Util.hasExtension(pathParts.getLeft().getName(), "pst"))
 					return Util.getParentFile(leftFile);
-				
+
 				// Existing archive entry -> return the archive
 				return leftFile;
 			}
 		});
-		
+
 		menuManager.addSeparator();
-		
+
 		menuManager.add(new MenuAction(Msg.copy.get()) {
 			public boolean isEnabled() {
 				return !viewer.getSelection().isEmpty();
@@ -325,19 +325,20 @@ public final class ResultPanel {
 				copyToClipboard();
 			}
 		});
-		
+
 		menuManager.addSeparator();
-		
+
 		menuManager.add(new MenuAction(Msg.save_current_ordering.get()) {
 			public boolean isEnabled() {
 				return true;
 			}
 			public void run() {
-				SettingsConf.Int.InitialSorting.set(viewer.getCurrentOrdering()); 
+				SettingsConf.Int.InitialSorting.set(viewer.getCurrentOrdering());
+				AppUtil.showInfo(Msg.default_setting_saved.get());
 			}
 		});
 	}
-	
+
 	private void copyToClipboard() {
 		List<ResultDocument> docs = getSelection();
 		if (docs.isEmpty())
@@ -347,38 +348,38 @@ public final class ResultPanel {
 			files.add(doc.getPath().getCanonicalFile());
 		Util.setClipboard(files);
 	}
-	
+
 	@NotNull
 	public Table getControl() {
 		return viewer.getControl();
 	}
-	
+
 	public int getItemCount() {
 		return viewer.getControl().getItemCount();
 	}
-	
+
 	@MutableCopy
 	@NotNull
 	public List<ResultDocument> getSelection() {
 		return viewer.getSelection();
 	}
-	
+
 	// header mode: auto-detect for "files + emails", no auto-detect for files and emails mode
 	public void setResults(	@NotNull List<ResultDocument> results,
 							@NotNull HeaderMode headerMode) {
 		Util.checkNotNull(results, headerMode);
-		
+
 		if (this.presetHeaderMode != headerMode) {
 			if (headerMode != HeaderMode.FILES_AND_EMAILS)
 				updateColumnHeaders(headerMode);
 			this.presetHeaderMode = headerMode;
 		}
 		setActualHeaderMode(results); // TODO post-release-1.1: needs some refactoring
-		
+
 		viewer.setRoot(results);
 		viewer.scrollToTop();
 	}
-	
+
 	private void setActualHeaderMode(List<ResultDocument> elements) {
 		if (presetHeaderMode != HeaderMode.FILES_AND_EMAILS) {
 			actualHeaderMode = presetHeaderMode;
@@ -408,7 +409,7 @@ public final class ResultPanel {
 	// column numbering starts at 1
 	// the index points at the column in visual order, not in creation order
 	public void sortByColumn(int columnIndex) {
-		
+
 		if (columnIndex == 0)
 			return;
 		/*
@@ -422,14 +423,14 @@ public final class ResultPanel {
 				return;
 			boolean up = Math.signum(columnIndex) > 0;
 			viewer.sortByColumn(columns.get(index), up);
-			
-			
+
+
 		}
 		catch (NumberFormatException e) {
 			return;
 		}
 	}
-	
+
 	// Should not be called with emails
 	private void launchFiles(@NotNull List<ResultDocument> docs) {
 		assert !docs.isEmpty();
@@ -463,7 +464,7 @@ public final class ResultPanel {
 		private final String fileHeader;
 		private final String emailHeader;
 		private final String combinedHeader;
-		
+
 		public VariableHeaderColumn(@NotNull String fileHeader,
 									@NotNull String emailHeader) {
 			super(fileHeader);
