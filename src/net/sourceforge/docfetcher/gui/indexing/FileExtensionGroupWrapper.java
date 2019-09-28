@@ -45,10 +45,10 @@ import net.sourceforge.docfetcher.util.gui.GroupWrapper;
  * @author Tran Nam Quang
  */
 final class FileExtensionGroupWrapper {
-	
+
 	@NotNull private Text textExtField;
 	@NotNull private Text zipExtField;
-	
+
 	private final LuceneIndex index;
 	private final FileExtensionChooser.Factory extChooserFactory;
 	private final GroupWrapper groupWrapper;
@@ -58,7 +58,7 @@ final class FileExtensionGroupWrapper {
 		this.index = index;
 		extChooserFactory = new FileExtensionChooser.Factory(
 			parent.getShell(), index.getCanonicalRootFile());
-		
+
 		groupWrapper = new GroupWrapper(parent, Msg.file_extensions.get()) {
 			protected void createLayout(Group parent) {
 				FileExtensionGroupWrapper.this.createLayout(parent);
@@ -68,7 +68,7 @@ final class FileExtensionGroupWrapper {
 			}
 		};
 	}
-	
+
 	@NotNull
 	public Group getGroup() {
 		return groupWrapper.getGroup();
@@ -86,7 +86,7 @@ final class FileExtensionGroupWrapper {
 		zipExtField = createExtField(
 			parent, Msg.zip_archives.get(), SettingsConf.StrList.defaultZipExtensions.get(), "defaultZipExtensions");
 	}
-	
+
 	@NotNull
 	private Text createExtField(@NotNull Composite parent,
 								@NotNull String label,
@@ -96,44 +96,44 @@ final class FileExtensionGroupWrapper {
 		final String configName = config;
 		((GridData)field.getLayoutData()).horizontalIndent = 5;
 		field.setText(Util.join(" ", extensions));
-		
+
 		Button chooserBt = Util.createPushButton(parent, "...", new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				onChooserButtonClicked(field);
 			}
 		});
-		
+
 		Button saverBt = Util.createPushButton(
 				parent, Img.PREFERENCES.get(), Msg.save_setting.get(), new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					onSaverButtonClicked(field,configName);
 				}
 			});
-		
+
 		chooserBt.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
 		saverBt.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
 		return field;
 	}
-	
+
 	private void onSaverButtonClicked(@NotNull final Text field,
 									  @NotNull final String config) {
 		if (config == "defaultZipExtensions") {
 			SettingsConf.StrList.defaultZipExtensions.set(Arrays.asList(field.getText().split(" ")));
-			AppUtil.showInfo("Default config saved");
+			AppUtil.showInfo(Msg.default_setting_saved.get());
 		} else if (config == "defaultTextExtensions") {
 			SettingsConf.StrList.defaultTextExtensions.set(Arrays.asList(field.getText().split(" ")));
-			AppUtil.showInfo("Default config saved");
+			AppUtil.showInfo(Msg.default_setting_saved.get());
 		}
 		return;
 	}
-	
+
 	private void onChooserButtonClicked(@NotNull final Text field) {
 		File rootFile = index.getCanonicalRootFile();
 		if (rootFile.isFile()) {
 			AppUtil.showError(Msg.listing_ext_inside_archives.get(), true, true);
 			return;
 		}
-		
+
 		FileExtensionChooser chooser = extChooserFactory.createChooser();
 		try {
 			Collection<String> extsOld = getExtensions(field);
@@ -154,37 +154,37 @@ final class FileExtensionGroupWrapper {
 			AppUtil.showError(msg, true, true);
 		}
 	}
-	
+
 	@NotNull
 	public Collection<String> getTextExtensions() {
 		return getExtensions(textExtField);
 	}
-	
+
 	public void setTextExtensions(@NotNull Collection<String> textExtensions) {
 		textExtField.setText(Util.join(" ", textExtensions));
 	}
-	
+
 	public void setZipExtensions(Collection<String> zipExtensions) {
 		zipExtField.setText(Util.join(" ", zipExtensions));
 	}
-	
+
 	@NotNull
 	public Collection<String> getZipExtensions() {
 		return getExtensions(zipExtField);
 	}
-	
+
 	@Immutable
 	@NotNull
 	private static Collection<String> getExtensions(@NotNull Text text) {
 		String string = text.getText().trim();
-		
+
 		/*
 		 * Without this, a list containing an empty string would be returned,
 		 * which will crash TrueZIP.
 		 */
 		if (string.isEmpty())
 			return Collections.emptyList();
-		
+
 		return Arrays.asList(string.split("[^\\p{Alnum}]+"));
 	}
 

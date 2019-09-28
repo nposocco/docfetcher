@@ -13,6 +13,9 @@ package net.sourceforge.docfetcher.model.index.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+// added as a debug shit peace, please get read if you have a better idea, else please shut the fuck up. Thanks.
+import java.nio.file.Paths;
 
 import de.schlichtherle.truezip.file.TArchiveDetector;
 import de.schlichtherle.truezip.file.TFile;
@@ -40,7 +43,7 @@ import net.sourceforge.docfetcher.util.annotations.Nullable;
  * @author Tran Nam Quang
  */
 class FileContext {
-	
+
 	private final IndexingConfig config;
 	private final TArchiveDetector zipDetector;
 	private final LuceneDocWriter writer;
@@ -68,7 +71,7 @@ class FileContext {
 		this.indexParentDir = indexParentDir;
 		setReporter(reporter);
 	}
-	
+
 	protected FileContext(	@NotNull FileContext superContext,
 							@NotNull Path originalPath) {
 		this(
@@ -82,22 +85,22 @@ class FileContext {
 				superContext.indexParentDir
 		);
 	}
-	
+
 	@NotNull
 	public final IndexingConfig getConfig() {
 		return config;
 	}
-	
+
 	@NotNull
 	public final TArchiveDetector getZipDetector() {
 		return zipDetector;
 	}
-	
+
 	@NotNull
 	public final LuceneDocWriter getWriter() {
 		return writer;
 	}
-	
+
 	// May return a default empty reporter
 	@NotNull
 	protected final IndexingReporter getReporter() {
@@ -109,31 +112,31 @@ class FileContext {
 			? IndexingReporter.nullReporter
 			: reporter;
 	}
-	
+
 	@Nullable
 	public final Path getOriginalPath() {
 		return originalPath;
 	}
-	
+
 	public final boolean isStopped() {
 		return cancelable.isCanceled();
 	}
-	
+
 	@NotNull
 	protected final Cancelable getStopper() {
 		return cancelable;
 	}
-	
+
 	@NotNull
 	protected final MutableInt getFileCount() {
 		return fileCount;
 	}
-	
+
 	@Nullable
 	protected final File getIndexParentDir() {
 		return indexParentDir;
 	}
-	
+
 	// returns success
 	// if the indexing is canceled before or during the execution of this method,
 	// the last-modified value of the given document will be set to -1.
@@ -145,7 +148,7 @@ class FileContext {
 			// Text extraction; may throw OutOfMemoryErrors
 			ParseResult parseResult = ParseService.parse(
 				config, file, doc.getName(), doc.getPath(), reporter, cancelable);
-			
+
 			/*
 			 * If we detect a cancel request at this point, the request probably
 			 * came in during the parsing step above. In that case, we'll keep
@@ -161,10 +164,10 @@ class FileContext {
 				writer.add(doc, file, parseResult);
 			else
 				writer.update(doc, file, parseResult);
-			
+
 			// Clear errors from previous indexing operations
 			doc.setError(null);
-			
+
 			return true;
 		}
 		catch (IOException e) {
@@ -178,7 +181,7 @@ class FileContext {
 		}
 		return false;
 	}
-	
+
 	public final boolean indexAndDeleteFile(@NotNull FileDocument doc,
 											@NotNull File file,
 											boolean added)
@@ -190,7 +193,7 @@ class FileContext {
 			file.delete();
 		}
 	}
-	
+
 	public final void deleteFromIndex(@NotNull String uid)
 			throws IndexingException {
 		try {
@@ -200,19 +203,19 @@ class FileContext {
 			throw new IndexingException(e);
 		}
 	}
-	
+
 	public void info(@NotNull InfoType type, @NotNull TreeNode treeNode) {
 		fileCount.increment();
 		reporter.info(new IndexingInfo(type, treeNode, fileCount.get()));
 	}
-	
+
 	// Reports the given error and saves it in the given tree node
 	public final void fail(	@NotNull ErrorType type,
 							@NotNull TreeNode treeNode,
 							@Nullable Throwable cause) {
 		UtilModel.fail(reporter, type, treeNode, cause);
 	}
-	
+
 	/**
 	 * Returns the original path for the given file, taking into account virtual
 	 * files inside TrueZIP archives. The returned path depends on whether a
@@ -227,7 +230,7 @@ class FileContext {
 		String relativePath = UtilModel.getRelativePath(topArchive, tzFile);
 		return originalPath.createSubPath(relativePath);
 	}
-	
+
 	/**
 	 * Returns whether the given TrueZIP file or directory should be skipped,
 	 * given the various settings of the receiver.
@@ -235,7 +238,7 @@ class FileContext {
 	public final boolean skip(@NotNull TFile fileOrDir) {
 		String filename = fileOrDir.getName();
 		Path filepath = getDirOrZipPath(fileOrDir);
-		
+
 		boolean isFileOrSolidArchive = fileOrDir.isFile();
 		boolean isZipArchiveOrFolder = !isFileOrSolidArchive;
 		boolean isZipArchive = isZipArchiveOrFolder
@@ -244,32 +247,36 @@ class FileContext {
 		boolean isFileOrArchive = isFileOrSolidArchive || isZipArchive;
 		boolean isFile = isFileOrSolidArchive
 				&& !config.isSolidArchive(filename);
-		
-		// Apply inclusion filters
-		boolean inAtLeastOne = false;
-		boolean atLeastOneInclude = false;
-		for (PatternAction patternAction : config.getPatternActions()) {
-			switch (patternAction.getAction()) {
-				case EXCLUDE:
-					break;
-				case DETECT_MIME:
-					break;
-				case INCLUDE:
-					atLeastOneInclude = true;
-					if (patternAction.matches(filename, filepath, isFileOrArchive)) {
-						inAtLeastOne = true;
-					}
-					break;
-				default:
-					throw new IllegalStateException();
+
+		// Apply inclusion filters conditioned on files at filename.toString - filepath.toString (bob ok)
+		if (!Files.isDirectory(Paths.get(filepath.toString()))) {
+			boolean inAtLeastOne = false;
+			boolean atLeastOneInclude = false;
+			for (PatternAction patternAction : config.getPatternActions()) {
+				switch (patternAction.getAction()) {
+					case EXCLUDE:
+						break;
+					case DETECT_MIME:
+						break;
+					case INCLUDE:
+						atLeastOneInclude = true;
+						if (patternAction.matches(filename, filepath, isFileOrArchive)) {
+							//AppUtil.showInfo("FOUND "+filepath.toString() + " contains " + filename.toString());
+							inAtLeastOne = true;
+							//return true;
+						}
+						break;
+					default:
+						throw new IllegalStateException();
+				}
+			}
+			if (atLeastOneInclude && !inAtLeastOne) {
+				//AppUtil.showInfo(filepath.toString() + " contains " + filename.toString());
+				return true;
 			}
 		}
-		//if (atLeastOneInclude && !inAtLeastOne) {
-			//AppUtil.showInfo("1");
-			//return true;
-		//}
-		
-		
+
+
 		for (PatternAction patternAction : config.getPatternActions()) {
 			switch (patternAction.getAction()) {
 			case EXCLUDE:
